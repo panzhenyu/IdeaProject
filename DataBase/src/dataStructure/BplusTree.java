@@ -83,22 +83,31 @@ public class BplusTree<K extends  Comparable<K>, F>
                 newNode.keys.add(key);
                 newNode.flags.add(flag);
             }
+            if(node.isLeaf && newNode.isLeaf)
+            {
+                newNode.next = node.next;
+                node.next = newNode;
+                newNode.previous = node;
+            }
             return true;
         } catch (Error e) {
             return false;
         }
     }
 
-    private boolean insertSort(BplusNode p, K key)                              // insert key into root or normal node
+    private boolean insertSort(BplusNode p, K key, BplusNode child)             // insert key into root or normal node
     {
+        p.children.add(null);
         p.keys.add(key);
         int t = p.keys.size() - 1;
         while(t>=0 && p.keys.get(t).compareTo(key)>0)                           // insert sort
         {
             p.keys.set(t+1, p.keys.get(t));
+            p.children.set(t+1, p.children.get(t));
             t--;
         }
         p.keys.set(t+1, key);                                                   // insert
+        p.children.set(t+1, child);
         return true;
     }
     private boolean insertSort(BplusNode p, K key, F flag)                      // insert data into leaf
@@ -126,8 +135,6 @@ public class BplusTree<K extends  Comparable<K>, F>
         {
             int location = binaryLocate(key, p.keys);
             p = p.children.get(location);
-            if(p.keys.get(location).compareTo(key) < 0)                             // alter parent keys with new max value
-                p.keys.set(location, key);
         }
         int idx = p.keys.indexOf(key);
         if(idx >= 0)                                                                // key is already in leaves
@@ -136,18 +143,37 @@ public class BplusTree<K extends  Comparable<K>, F>
             return  true;
         }
         insertSort(p, key, flag);                                                   // insert new data
-        if(p.keys.size() >= rank)                                                   // divide if greater than rank
+        while(p.keys.size() >= rank);
         {
             BplusNode newNode = new BplusNode(false, p.isLeaf);
-            if(!divideBplusNode(p, newNode))
+            if(!divideBplusNode(p, newNode)) {
                 return false;
-            newNode.next = p.next;
-            p.next = newNode;
-            newNode.previous = p;
+            }
+            if(p.parent == null)
+            {
+                BplusNode newParent = new BplusNode(p.isRoot, false);
+                newParent.keys.add(p.keys.get(p.keys.size()-1));
+                newParent.keys.add(newNode.keys.get(newNode.keys.size()-1));
+                newParent.children.add(p);
+                newParent.children.add(newNode);
+                p.parent = newParent;
+            }
+            else
+            {
+                int location = p.parent.children.indexOf(p);
+                p.parent.children.remove(location);
+                p.parent.keys.remove(location);
+                insertSort(p.parent, p.keys.get(p.keys.size()-1), p);
+                insertSort(p.parent, newNode.keys.get(newNode.keys.size()-1), newNode);
+            }
+            newNode.parent = p.parent;                                              // renew parent pointer
+            p = p.parent;                                                           // iterate to renew all nodes
         }
-        do{                                                                     // update parent with maxvalue of p
-            break;
-        } while(true);
+        while(p.parent != null)                                                     // renew keys
+        {
+
+            p = p.parent;
+        }
         return true;
     }
 
@@ -156,17 +182,12 @@ public class BplusTree<K extends  Comparable<K>, F>
         return true;
     }
 
-//    private BTNode locate(String data)
-//    {
-//
-//    }
-
-    public boolean alter(String data, String newData)
+    public boolean alter(K key, K newKey)
     {
         return true;
     }
 
-    public String contentOf(String key)
+    public String contentOf(K key)
     {
         return "";
     }

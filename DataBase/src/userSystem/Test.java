@@ -1,6 +1,7 @@
 package userSystem;
 
 import java.io.*;
+import java.util.ArrayList;
 
 public class Test
 {
@@ -14,20 +15,17 @@ public class Test
 //        while(in.read(buff) != -1)
 //            out.write(buff);
 //        out.write(buff);
-        A a = new A(5);
-        f(a);
-        System.out.println(a.i);
-    }
-    static void f(A a)
-    {
-        a = new A(1);
+        ArrayList<A> a = new ArrayList<>();
+        A a1 = new A();
+        A a2 = new A();
+        A a3 = new A();
+        a.add(a1);
+        a.add(a2);
+        a.add(a3);
+        System.out.println(a.indexOf(new A()));                                       //answer is 1
     }
 }
 class A
 {
-    int i;
-    A(int i)
-    {
-        this.i = i;
-    }
+
 }
