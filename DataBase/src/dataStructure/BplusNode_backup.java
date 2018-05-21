@@ -1,12 +1,9 @@
 package dataStructure;
 
-import java.lang.reflect.Array;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Map.Entry;
 
-public class BplusNode_backup<K extends Comparable<K> ,F>
+public class BplusNode_backup<K extends Comparable<K> ,F extends Comparable<F>>
 {
     private boolean isLeaf;
 
@@ -22,7 +19,7 @@ public class BplusNode_backup<K extends Comparable<K> ,F>
 
     private List<K> keys;
 
-    private List<LinkedList<F>> flags;
+    private List<CircleLinkedList<F>> flags;
 
     public BplusNode_backup(boolean isRoot, boolean isLeaf)
     {

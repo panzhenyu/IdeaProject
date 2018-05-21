@@ -2,9 +2,9 @@ package dataStructure;
 
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Random;
+import java.util.Queue;
 
-public class BplusTree<K extends  Comparable<K>, F>
+public class BplusTree<K extends Comparable<K>, F extends Comparable<F>>
 {
     private class BplusNode
     {
@@ -22,7 +22,7 @@ public class BplusTree<K extends  Comparable<K>, F>
 
         List<K> keys;
 
-        List<LinkedList<F>> flags = null;
+        List<CircleLinkedList<F>> flags = null;
 
         BplusNode(boolean isRoot, boolean isLeaf)
         {
@@ -38,8 +38,6 @@ public class BplusTree<K extends  Comparable<K>, F>
 
     private final static short defaultRand = 200;
 
-    private final static byte NOTFOUND = -1;
-
     private int rank;
 
     private BplusNode root;
@@ -53,12 +51,19 @@ public class BplusTree<K extends  Comparable<K>, F>
         this.sqt = this.root;
     }
 
-    public BplusTree()
-    {
+    public BplusTree() {
         this(BplusTree.defaultRand);
     }
 
-    private int binaryLocate(K key, List<K> keys)                                   // find the next node index
+    private BplusNode locate(K key)
+    {
+        BplusNode p = this.root;
+        while(!p.isLeaf)
+            p = p.children.get(binarySearch(key, p.keys));
+        return p;
+    }
+
+    private int binarySearch(K key, List<K> keys)                                   // find the next node index
     {
         int low = 0, high = keys.size() - 1, mid, cmp;
         while (low <= high) {
@@ -89,7 +94,7 @@ public class BplusTree<K extends  Comparable<K>, F>
                 newNode.keys.add(key);
                 if(isLeaf)
                 {
-                    LinkedList<F> flag = node.flags.remove(mid);
+                    CircleLinkedList<F> flag = node.flags.remove(mid);
                     newNode.flags.add(flag);
                 }
                 else
@@ -128,19 +133,35 @@ public class BplusTree<K extends  Comparable<K>, F>
     }
     private boolean insertSort(BplusNode p, K key, F flag)                      // insert data into leaf
     {
-        LinkedList<F> newL = new LinkedList<>();
+        CircleLinkedList<F> newL = new CircleLinkedList<>();
         newL.append(flag);
         p.flags.add(newL);                                                      // increace length
         p.keys.add(key);
         int t = p.keys.size() - 2;
-        while(t>=0 && p.keys.get(t).compareTo(key)>0)                           // insert sort
+        while(t>=0 && p.keys.get(t).compareTo(key)>0)                               // insert sort
         {
             p.keys.set(t+1, p.keys.get(t));
             p.flags.set(t+1, p.flags.get(t));
             t--;
         }
-        p.keys.set(t+1, key);                                                   // insert
+        p.keys.set(t+1, key);                                                       // insert
         p.flags.set(t+1, newL);
+        return true;
+    }
+
+    private boolean insertSort(BplusNode p, K key, CircleLinkedList<F> flagL)             // different from leaf insertSort, this sort insert a linkedlist of flag
+    {
+        p.flags.add(flagL);
+        p.keys.add(key);
+        int t = p.keys.size() - 2;
+        while(t>=0 && p.keys.get(t).compareTo(key)>0)
+        {
+            p.keys.set(t+1, p.keys.get(t));
+            p.flags.set(t+1, p.flags.get(t));
+            t--;
+        }
+        p.keys.set(t+1, key);
+        p.flags.set(t+1, flagL);
         return true;
     }
 
@@ -149,25 +170,33 @@ public class BplusTree<K extends  Comparable<K>, F>
         BplusNode p = this.root;
         while(!p.isLeaf)
         {
-            int location = binaryLocate(key, p.keys);
-            if(location == p.keys.size()-1)
-                p.keys.set(location, key);                                          // renew key
-            p = p.children.get(location);
+            if(key.compareTo(p.keys.get(p.keys.size()-1)) > 0) {
+                p.keys.set(p.keys.size()-1, key);                                   // renew key
+                p = p.children.get(p.keys.size() - 1);
+            } else {
+                int location = binarySearch(key, p.keys);
+                p = p.children.get(location);
+            }
         }
         int idx = p.keys.indexOf(key);
         if(idx >= 0)                                                                // key is already in leaves
         {
-            p.flags.get(idx).append(flag);
-            return  true;
+            if(!p.flags.get(idx).contains(flag))
+            {
+                p.flags.get(idx).append(flag);
+                return true;
+            }
+            return false;
         }
-        insertSort(p, key, flag);                                                   // insert new data
+        if(!insertSort(p, key, flag))                                               // insert new data
+            return false;
         while(p.keys.size() > rank)
         {
             BplusNode newNode = new BplusNode(false, p.isLeaf);
             if(!divideBplusNode(p, newNode)) {
                 return false;
             }
-            if(p.parent == null)                                                    // leave doesn't have parent
+            if(p.parent == null)                                                    // leaf doesn't have parent
             {
                 BplusNode newParent = new BplusNode(true, false);
                 newParent.keys.add(p.keys.get(p.keys.size()-1));
@@ -184,8 +213,8 @@ public class BplusTree<K extends  Comparable<K>, F>
                 int location = p.parent.children.indexOf(p);
                 p.parent.children.remove(location);
                 p.parent.keys.remove(location);
-                insertSort(p.parent, p.keys.get(p.keys.size()-1), p);
-                insertSort(p.parent, newNode.keys.get(newNode.keys.size()-1), newNode);
+                if(!(insertSort(p.parent, p.keys.get(p.keys.size()-1), p) && insertSort(p.parent, newNode.keys.get(newNode.keys.size()-1), newNode)))
+                    return false;
                 newNode.parent = p.parent;
             }
             p = p.parent;                                                           // iterate to renew all nodes
@@ -196,10 +225,138 @@ public class BplusTree<K extends  Comparable<K>, F>
     private void show()
     {
         BplusNode p = this.root;
+        Queue<BplusNode> q = new java.util.LinkedList<>();
+        q.add(p);
+        System.out.println(p.keys);
+        while(!q.isEmpty())
+        {
+            ArrayList<BplusNode> a = new ArrayList<>();
+            while(!q.isEmpty())
+                a.add(q.poll());
+            while(!a.isEmpty())
+            {
+                BplusNode pos = a.remove(0);
+                if(pos.children != null) {
+                    for (BplusNode n : pos.children) {
+                        q.add(n);
+                        System.out.print(n.keys + " ");
+                    }
+                }
+            }
+            System.out.println();
+        }
     }
 
-    public boolean delete(K key)
+    private boolean mergeBplusNode(BplusNode node1, BplusNode node2)
     {
+        int len = node2.keys.size();
+        for(int i=0;i<len;i++)
+            node1.keys.add(node2.keys.remove(0));
+        if(node1.isLeaf && node2.isLeaf)
+        {
+            for(int i=0;i<len;i++)
+                node1.flags.add(node2.flags.remove(0));
+            node1.next = node2.next;
+            if(node2.next != null)
+                node2.next.previous = node1;
+            node2.flags = null;                                                         // free resource
+        } else {
+            for(int i=0;i<len;i++)
+                node1.children.add(node2.children.remove(0));
+            node2.children = null;                                                      // free resource
+        }
+        node2.previous = null;                                                          // free resource
+        node2.next = null;
+        node2.keys = null;
+        return true;
+    }
+
+    public boolean remove(K key)
+    {
+        BplusNode p = this.root;
+        if(p.keys.size()==0 || key.compareTo(p.keys.get(p.keys.size()-1)) > 0)          // tree can't be empty and key can't be the largest
+            return false;
+
+        while(!p.isLeaf)
+            p = p.children.get(binarySearch(key, p.keys));
+        int location = p.keys.indexOf(key);
+        if(location < 0)                                                                // key isn't in this tree
+            return false;
+
+        p.keys.remove(location);
+        p.flags.remove(location);
+
+        int leafMinSize = (int)Math.ceil(rank/2.);
+        while(!p.isRoot && p.keys.size()<leafMinSize)
+        {
+            int pos = p.parent.children.indexOf(p);                                                         // position of present child
+            BplusNode brother = null;
+            boolean left = false;
+            if (pos - 1 > 0 && p.parent.children.get(pos - 1).keys.size() - 1 >= leafMinSize)               // try to borrow from brother if exists
+            {
+                brother = p.parent.children.get(pos - 1);
+                left = true;
+            } else if (pos + 1 < p.parent.children.size() && p.parent.children.get(pos + 1).keys.size() - 1 >= leafMinSize) {
+                brother = p.parent.children.get(pos + 1);
+            }
+            if (brother != null)                                                                                // borrow
+            {
+                int last = brother.keys.size() - 1;
+                if (p.isLeaf) {
+                    if(!left) {
+                        insertSort(p, brother.keys.remove(0), brother.flags.remove(0));
+                    }
+                    else {
+                        insertSort(p, brother.keys.remove(last), brother.flags.remove(last));
+                    }
+                } else {
+                    if(!left) {
+                        insertSort(p, brother.keys.remove(0), brother.children.remove(0));
+                    }
+                    else {
+                        insertSort(p, brother.keys.remove(last), brother.children.remove(last));
+                    }
+                }
+                break;
+            } else {                                                                                            // merge
+                left = false;
+                if (pos - 1 > 0) {
+                    brother = p.parent.children.get(pos - 1);
+                    left = true;
+                } else if (pos + 1 < p.parent.children.size()) {
+                    brother = p.parent.children.get(pos + 1);
+                }
+                if (left) {
+                    mergeBplusNode(brother, p);
+                    p.parent.keys.remove(pos);
+                    p.parent.children.remove(pos);
+                    pos--;
+                    p = brother;
+                } else {
+                    mergeBplusNode(p, brother);
+                    p.parent.keys.remove(pos + 1);
+                    p.parent.children.remove(pos + 1);
+                }
+            }
+            p.parent.keys.set(pos, p.keys.get(p.keys.size() - 1));                      // renew max key
+            p = p.parent;
+        }
+        if(p.isRoot)
+        {
+            if(p.isLeaf)
+                return true;
+            if(p.keys.size() < 2) {
+                this.root = p.children.remove(0);
+                this.root.isRoot = true;
+                return true;
+            }
+        }
+        while(!p.isRoot)
+        {
+            int pos = p.parent.children.indexOf(p);
+            p.parent.keys.set(pos, p.keys.get(p.keys.size()-1));                            // renew max key
+            p = p.parent;
+        }
         return true;
     }
 
@@ -210,23 +367,18 @@ public class BplusTree<K extends  Comparable<K>, F>
 
     public String contentOf(K key)
     {
+
         return "";
     }
 
     public static void main(String[] args)
     {
-        BplusTree<Integer, Integer> T = new BplusTree<>(200);
-        int count = 400000;
+        BplusTree<Integer, Integer> T = new BplusTree<>(10);
+        int count = 500, t;
         while(count-- > 0)
-        {
-            System.out.println(count);
-            T.insert((int)(Math.random()*1000), (int)(Math.random()*1000));
-        }
-        BplusTree.BplusNode sqt = T.sqt;
-        while(sqt != null)
-        {
-            System.out.print(sqt.keys + " ");
-            sqt = sqt.next;
-        }
+            T.insert(count, 1);
+        if(!T.insert(2,2))
+            System.out.println("key already exists");
+        T.show();
     }
 }
