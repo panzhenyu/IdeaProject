@@ -3,6 +3,8 @@ package userSystem;
 import java.io.*;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Random;
 
 public class Test
@@ -17,7 +19,5 @@ public class Test
 //        while(in.read(buff) != -1)
 //            out.write(buff);
 //        out.write(buff);
-        System.out.println((int)(Math.ceil(5/2.)));
-        BigInteger b = new BigInteger(1024, new Random());
     }
 }
