@@ -15,15 +15,22 @@ public class test
 //        System.out.println(file.length());
 //        file.close();
 
-        BufferedReader reader = new BufferedReader(new FileReader(new File("test.txt")));
-        Iterator itr = reader.lines().iterator();
-        while(itr.hasNext())
-            System.out.println(itr.next());
+//        BufferedReader reader = new BufferedReader(new FileReader(new File("test.txt")));
+//        Iterator itr = reader.lines().iterator();
+//        while(itr.hasNext())
+//        {
+//            String[] ss = itr.next().toString().split(" ");
+//            for(String s:ss)
+//                System.out.print(s + " ");
+//            System.out.println();
+//        }
 
 //        RandomAccessFile file = new RandomAccessFile("test.txt", "rw");
 //        file.seek(file.length());
 //        long count = 1000000000;
 //        while(count-- > 0)
 //            file.writeBytes("hello world \n");
+
+        System.out.println("    ".split(" ").length);
     }
 }

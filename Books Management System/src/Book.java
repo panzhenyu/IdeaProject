@@ -5,7 +5,9 @@ public class Book
     private String author;
     private int stock;
     private int total;
+
     public Book() {}
+
     public Book(long id, String name, String author, int stock, int total)
     {
         this();

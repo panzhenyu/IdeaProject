@@ -357,9 +357,18 @@ public class BplusTree<K extends Comparable<K>, F extends Comparable<F>>
         return 0;
     }
 
-    public String contentOf(K key)
+    public static void write(String file, int nodeSize, BplusTree T)
     {
-        return "";
+
+    }
+
+    public static boolean read(String file, int nodeSize, BplusTree T, String keyType)
+    {
+        try {
+            return true;
+        } catch(Error e) {
+            return false;
+        }
     }
 
     public static void main(String[] args)

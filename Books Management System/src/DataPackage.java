@@ -10,20 +10,20 @@ public class DataPackage
         books = new ArrayList<>();
     }
 
-    public boolean importFile(String file)
+    public DataPackage(ArrayList<Book> books)
     {
-        try {
-            File fp = new File(file);
-            BufferedReader reader = new BufferedReader(new FileReader(fp));
-            while(reader.ready());
-            reader.close();
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
+        this.books = books;
     }
+
     public Iterator getData()
     {
         return books.iterator();
+    }
+
+    public DataPackage mix(DataPackage o)
+    {
+        ArrayList<Book> newBooks = (ArrayList<Book>)this.books.clone();
+        newBooks.addAll(o.books);
+        return new DataPackage(newBooks);
     }
 }
