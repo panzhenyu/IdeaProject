@@ -1,9 +1,9 @@
 package utils;
 
-import java.util.List;
-import java.util.LinkedList;
-import java.util.ArrayList;
-import java.util.Queue;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.lang.reflect.Array;
+import java.util.*;
 
 public class BplusTree<K extends Comparable<K>, F extends Comparable<F>>
 {
@@ -191,29 +191,6 @@ public class BplusTree<K extends Comparable<K>, F extends Comparable<F>>
         return true;
     }
 
-    private void show()
-    {
-        BplusNode p = this.root;
-        Queue<BplusNode> q = new LinkedList<>();
-        q.add(p);
-        System.out.println(p.keys);
-        while (!q.isEmpty()) {
-            ArrayList<BplusNode> a = new ArrayList<>();
-            while (!q.isEmpty())
-                a.add(q.poll());
-            while (!a.isEmpty()) {
-                BplusNode pos = a.remove(0);
-                if (pos.children != null) {
-                    for (BplusNode n : pos.children) {
-                        q.add(n);
-                        System.out.print(n.keys + " ");
-                    }
-                }
-            }
-            System.out.println();
-        }
-    }
-
     private boolean mergeBplusNode(BplusNode node1, BplusNode node2)
     {
         int len = node2.keys.size();
@@ -357,28 +334,84 @@ public class BplusTree<K extends Comparable<K>, F extends Comparable<F>>
         return 0;
     }
 
-    public static void write(String file, int nodeSize, BplusTree T)
+    public void show()
     {
-
+        BplusNode p = this.root;
+        Queue<BplusNode> q = new LinkedList<>();
+        q.add(p);
+        System.out.println(p.keys);
+        while (!q.isEmpty()) {
+            ArrayList<BplusNode> a = new ArrayList<>();
+            while (!q.isEmpty())
+                a.add(q.poll());
+            while (!a.isEmpty()) {
+                BplusNode pos = a.remove(0);
+                if (pos.children != null) {
+                    for (BplusNode n : pos.children) {
+                        q.add(n);
+                        System.out.print(n.keys + " ");
+                    }
+                }
+            }
+            System.out.println();
+        }
     }
 
-    public static boolean read(String file, int nodeSize, BplusTree T, String keyType)
+    public void write(String file, int nodeSize) throws IOException
+    {
+        RandomAccessFile fp = new RandomAccessFile(file, "rw");
+        Queue<BplusNode> q = new LinkedList<>();
+        ArrayList<BplusNode> var = new ArrayList<>();
+        String var1 = "";
+        q.add(this.root);
+        while(!q.isEmpty())
+        {
+            var = new ArrayList<>();
+            while(!q.isEmpty())
+                var.add(q.poll());
+            for(BplusNode node : var)
+            {
+                var1 = "";
+                for(K key : node.keys)
+                    var1 += key.toString() + ",";
+                for(int i=var1.length();i<=nodeSize;i++)
+                    var1 += " ";
+                fp.write(var1.getBytes());
+                if(!node.isLeaf)
+                    for(BplusNode child : node.children)
+                        q.add(child);
+            }
+        }
+        fp.write("\nflag\n".getBytes());
+        for(BplusNode node : var)
+        {
+            var1 = "";
+            for(F flag : node.flags)
+                var1 += flag.toString() + ",";
+            for(int i=var1.length();i<nodeSize;i++)
+                var1 += " ";
+            fp.write(var1.getBytes());
+        }
+        fp.close();
+    }
+
+    public boolean read(String file, int nodeSize)
     {
         try {
+            RandomAccessFile bookInfo = new RandomAccessFile(file, "r");
             return true;
-        } catch(Error e) {
+        } catch(Exception e) {
             return false;
         }
     }
 
-    public static void main(String[] args)
+    public static void main(String[] args) throws IOException
     {
-        BplusTree<Integer, Integer> T = new BplusTree<>(10);
-        int count = 500, t;
+        BplusTree<Integer, Integer> T = new BplusTree<>(5);
+        int count = 25, t;
         while (count-- > 0)
             T.insert(count, 1);
-        T.alter(0, 1);
-        T.alter(0, 500);
         T.show();
+        T.write("tree", 32);
     }
 }

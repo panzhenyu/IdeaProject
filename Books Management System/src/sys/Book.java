@@ -1,3 +1,5 @@
+package sys;
+
 public class Book
 {
     private long id;
@@ -18,7 +20,32 @@ public class Book
         this.total = total;
     }
 
-    public boolean lend()
+    public long getId()
+    {
+        return id;
+    }
+
+    public String getName()
+    {
+        return name;
+    }
+
+    public String getAuthor()
+    {
+        return author;
+    }
+
+    public int getStock()
+    {
+        return stock;
+    }
+
+    public int getTotal()
+    {
+        return total;
+    }
+
+    public boolean borrow()
     {
         if(stock == 0)
             return false;
@@ -28,6 +55,8 @@ public class Book
 
     public boolean giveBack()
     {
+        if(stock+1 > total)
+            return false;
         stock++;
         return true;
     }
