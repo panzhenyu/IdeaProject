@@ -8,25 +8,19 @@ import java.util.Iterator;
 public class DataPackage
 {
     private ArrayList<Book> books;
-    public DataPackage()
-    {
-        books = new ArrayList<>();
-    }
 
     public DataPackage(ArrayList<Book> books)
     {
         this.books = books;
     }
 
-    public Iterator getData()
+    public Iterator<Book> getData()
     {
         return books.iterator();
     }
 
-    public DataPackage mix(DataPackage o)
+    public ArrayList<Book> getBooks()
     {
-        ArrayList<Book> newBooks = (ArrayList<Book>)this.books.clone();
-        newBooks.addAll(o.books);
-        return new DataPackage(newBooks);
+        return books;
     }
 }

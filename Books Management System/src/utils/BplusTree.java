@@ -374,7 +374,7 @@ public class BplusTree<K extends Comparable<K>, F extends Comparable<F>>
                 var1 = "";
                 for(K key : node.keys)
                     var1 += key.toString() + ",";
-                for(int i=var1.length();i<=nodeSize;i++)
+                for(int i=var1.length();i<nodeSize;i++)
                     var1 += " ";
                 fp.write(var1.getBytes());
                 if(!node.isLeaf)
